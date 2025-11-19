@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}إنشاء مجموعة جديدة{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📦 إنشاء مجموعة جديدة</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('create_group') }}">
+            <div class="form-group">
+                <label for="group_name">اسم المجموعة (GroupName):</label>
+                <input type="text" id="group_name" name="group_name" class="form-control" required
+                       pattern="[a-zA-Z0-9_-]{1,64}" 
+                       title="الرجاء إدخال حروف إنجليزية، أرقام، أو - و _ فقط (بدون مسافات)">
+            </div>
+            <div class="form-group">
+                <label for="comments">الوصف (Comments):</label>
+                <input type="text" id="comments" name="comments" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="policy_name">تطبيق صلاحية (Policy):</label>
+                <select id="policy_name" name="policy_name" class="form-control">
+                    <option value="no_policy">-- عدم تطبيق أي صلاحية --</option>
+                    {% for name, display in policies.items() %}
+                        <option value="{{ name }}">{{ display }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-yellow">إنشاء المجموعة</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

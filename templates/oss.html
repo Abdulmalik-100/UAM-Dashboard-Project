@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}عرض خدمات OSS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-database" style="color: #17a2b8;"></i> قائمة OSS Buckets</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if buckets %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم البكت (Name)</th>
+                            <th>الموقع (Location)</th>
+                            <th>تاريخ الإنشاء</th>
+                            <th>نوع التخزين (Storage Class)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bucket in buckets %}
+                        <tr>
+                            <td>
+                                <i class="fas fa-box-open" style="color: var(--text-secondary); margin-left: 8px;"></i>
+                                <strong>{{ bucket.name }}</strong>
+                            </td>
+                            <td style="direction: ltr; text-align: left;">{{ bucket.location }}</td>
+                            <td>{{ bucket.creation_date | string | truncate(10, true, '') }}</td>
+                            <td>{{ bucket.storage_class }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            {% if not get_flashed_messages() %}
+                <p style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                    لا يوجد (Buckets) لعرضها، أو أن المستخدم الحالي ({{ current_user.id }}) لا يمتلك صلاحية 'oss:ListBuckets'.
+                </p>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

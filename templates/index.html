@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}الصفحة الرئيسية{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+    <i class="fas fa-home" style="color: #555;"></i> الصفحة الرئيسية
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 style="display: flex; justify-content: space-between; align-items: center;">
+            <span>ملخص النشاطات</span>
+            <i class="fas fa-chart-pie" style="color: #007bff;"></i>
+        </h2>
+    </div>
+    <div class="card-body">
+        <div style="max-width: 500px; margin: 0 auto;">
+            <canvas id="activityChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-users" style="color: #007bff;"></i> إدارة المستخدمين</h2>
+    </div>
+    <div class="card-body">
+        <p>عرض، إنشاء، حذف، وتعديل صلاحيات المستخدمين.</p>
+        <a href="{{ url_for('users') }}" class="btn btn-primary">عرض قائمة المستخدمين</a>
+        <a href="{{ url_for('create_user') }}" class="btn btn-yellow" style="margin-right: 10px;">إنشاء مستخدم جديد</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-user-shield" style="color: #28a745;"></i> إدارة الأدوار (Roles)</h2>
+    </div>
+    <div class="card-body">
+        <p>عرض، إنشاء، وتعديل أدوار RAM (للسماح للخدمات بالوصول).</p>
+        <a href="{{ url_for('list_roles') }}" class="btn btn-green">عرض قائمة الأدوار</a>
+        <a href="{{ url_for('create_role') }}" class="btn btn-yellow" style="margin-right: 10px;">إنشاء دور جديد</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-layer-group" style="color: #ffc107;"></i> إدارة المجموعات</h2>
+    </div>
+    <div class="card-body">
+        <p>عرض وإنشاء مجموعات المستخدمين.</p>
+        <a href="{{ url_for('list_groups') }}" class="btn btn-yellow">عرض قائمة المجموعات</a>
+        <a href="{{ url_for('create_group') }}" class="btn btn-secondary" style="margin-right: 10px;">إنشاء مجموعة جديدة</a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const stats = {{ stats | tojson | safe }};
+        
+        const data = {
+            labels: [
+                'إنشاء مستخدم', 'تعديل صلاحيات', 'حذف مستخدم',
+                'إنشاء مجموعة', 'حذف مجموعة',
+                'إنشاء دور', 'تعديل دور', 'حذف دور',
+                'إنشاء مفتاح مؤقت', 'تسجيل دخول'
+            ],
+            datasets: [{
+                label: 'العمليات',
+                data: [
+                    stats.user_created, stats.user_updated, stats.user_deleted,
+                    stats.group_created, stats.group_deleted,
+                    stats.role_created, stats.role_updated, stats.role_deleted,
+                    stats.sts_generated, stats.logins
+                ],
+                backgroundColor: [
+                    '#007bff', '#42a5f5', '#90caf9', 
+                    '#ffc107', '#ffe082',          
+                    '#198754', '#66bb6a', '#a5d6a7', 
+                    '#6c757d',                     
+                    '#dc3545'                      
+                ],
+                borderWidth: 1
+            }]
+        };
+
+        const config = {
+            type: 'doughnut',
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'left',
+                        labels: {
+                            font: { family: "'Cairo', sans-serif", size: 14 },
+                            boxWidth: 20
+                        }
+                    }
+                }
+            }
+        };
+
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        new Chart(ctx, config);
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}الوصول المؤقت (STS){% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-key" style="color: var(--accent-blue);"></i> إنشاء مفاتيح وصول مؤقتة (STS)</h1>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-user-clock"></i> تقمص دور (Assume Role)</h2>
+    </div>
+    <div class="card-body">
+        <p>
+            اختر "دور" (Role) لتقمصه. المستخدم ({{ current_user.id }}) يجب أن يمتلك صلاحية (sts:AssumeRole) على الدور.
+        </p>
+        
+        <form method="POST" action="{{ url_for('generate_sts_token') }}">
+            
+            <div class="form-group">
+                <label for="role_arn">1. اختر الدور (Role) لتقمصه:</label>
+                <select id="role_arn" name="role_arn" class="form-control" required>
+                    <option value="">-- اختر دور --</option>
+                    {% for role in roles %}
+                        <option value="{{ role.Arn }}" {% if form_data.role_arn == role.Arn %}selected{% endif %}>
+                            {{ role.RoleName }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="role_session_name">2. اسم الجلسة (RoleSessionName):</label>
+                <input type="text" id="role_session_name" name="role_session_name" class="form-control" 
+                       value="{{ form_data.role_session_name or current_user.id + '-session' }}" required 
+                       style="direction: ltr;">
+                <small class="form-text">هذا الاسم سيظهر في سجلات (Logs) لتعرف من قام بالعملية.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="duration">3. مدة الجلسة (بالدقائق):</label>
+                <input type="number" id="duration" name="duration" class="form-control" 
+                       value="{{ form_data.duration or '60' }}" required 
+                       style="direction: ltr;">
+                <small class="form-text">الحد الأدنى 15 (دقيقة) والحد الأقصى 720 (12 ساعة) أو حسب إعدادات الدور.</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-cogs"></i> إنشاء المفاتيح
+            </button>
+        </form>
+    </div>
+</div>
+
+{% if credentials %}
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-check-circle" style="color: var(--accent-green);"></i> المفاتيح المؤقتة (صالحة لمدة {{ form_data.duration }} دقيقة)</h2>
+    </div>
+    <div class="card-body">
+        <p>
+            استخدم هذه المفاتيح للوصول إلى الموارد. ستنتهي صلاحيتها تلقائياً.
+            <br>
+            <strong>تحذير:</strong> هذه هي المرة الوحيدة التي ستظهر فيها (Secret Key) و (Token).
+        </p>
+        <div class="form-group" style="direction: ltr;">
+            <label>AccessKeyId:</label>
+            <input type="text" class="form-control" value="{{ credentials.AccessKeyId }}" readonly>
+        </div>
+        <div class="form-group" style="direction: ltr;">
+            <label>AccessKeySecret:</label>
+            <input type="text" class="form-control" value="{{ credentials.AccessKeySecret }}" readonly>
+        </div>
+        <div class="form-group" style="direction: ltr;">
+            <label>SecurityToken:</label>
+            <textarea class="form-control" rows="8" readonly>{{ credentials.SecurityToken }}</textarea>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

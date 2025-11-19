@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}إدارة المستخدمين{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-users" style="color: var(--accent-blue);"></i> قائمة المستخدمين</h1>
+    <a href="{{ url_for('create_user') }}" class="btn btn-primary">إنشاء مستخدم جديد</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if users %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم الدخول</th>
+                            <th>الاسم المعروض</th>
+                            <th>الصلاحيات</th>
+                            <th>المجموعات</th>
+                            <th>بيانات إضافية</th>
+                            <th>تاريخ الإنشاء</th>
+                            <th>العمليات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.UserName }}</td>
+                            <td>{{ user.DisplayName }}</td>
+                            <td>{{ user.Policies }}</td>
+                            <td>{{ user.Groups }}</td>
+                            <td style="font-size: 0.9em; color: var(--text-secondary);">{{ user.Comments }}</td>
+                            <td>{{ user.CreateDate | truncate(10, true, '') }}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('edit_user', username=user.UserName) }}" class="btn btn-yellow">تعديل</a>
+                                    <form method="POST" action="{{ url_for('delete_user', username=user.UserName) }}" style="display: inline;" onsubmit="return confirm('هل أنت متأكد من حذف المستخدم {{ user.UserName }}؟')">
+                                        <button type="submit" class="btn btn-red">حذف</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            {% if not get_flashed_messages() %}
+                <p style="text-align: center; color: var(--text-secondary); padding: 20px;">لا يوجد مستخدمين لعرضهم حالياً.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

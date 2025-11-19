@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}إنشاء مستخدم جديد{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👤 إنشاء مستخدم جديد</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('create_user') }}">
+            
+            <div class="form-group">
+                <label for="username">اسم الدخول (UserName):</label>
+                <input type="text" id="username" name="username" class="form-control" required
+                       pattern="[a-zA-Z0-9_-]{1,64}" 
+                       title="الرجاء إدخال حروف إنجليزية، أرقام، أو - و _ فقط (بدون مسافات)">
+            </div>
+            <div class="form-group">
+                <label for="display_name">الاسم المعروض (DisplayName):</label>
+                <input type="text" id="display_name" name="display_name" class="form-control">
+            </div>
+            
+            <hr style="border-color: var(--border-color); margin: 25px 0;">
+
+            <div class="form-group">
+                <label for="national_id">رقم الهوية :</label>
+                <input type="text" id="national_id" name="national_id" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="phone">رقم الهاتف :</label>
+                <input type="text" id="phone" name="phone" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="address">عنوان السكن :</label>
+                <input type="text" id="address" name="address" class="form-control">
+            </div>
+
+            <hr style="border-color: var(--border-color); margin: 25px 0;">
+            
+            <div class="form-group">
+                <label for="policy_names">تطبيق صلاحيات (Policies):</label>
+                <select id="policy_names" name="policy_names" class="form-control" multiple size="5">
+                    <option value="no_policy" selected>-- عدم تطبيق أي صلاحية --</option>
+                    {% for name, display in policies.items() %}
+                        <option value="{{ name }}">{{ display }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text">اضغط (Ctrl) أو (Cmd) لاختيار أكثر من صلاحية.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="group_name">إضافة إلى مجموعة (Group):</label>
+                <select id="group_name" name="group_name" class="form-control">
+                    <option value="no_group">-- عدم الإضافة لأي مجموعة --</option>
+                    {% if groups %}
+                        {% for group in groups %}
+                            <option value="{{ group.GroupName }}">{{ group.GroupName }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">إنشاء المستخدم</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

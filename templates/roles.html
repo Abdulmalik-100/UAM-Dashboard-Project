@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}إدارة الأدوار{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+    <span><i class="fas fa-user-shield"></i> قائمة الأدوار (Roles)</span>
+    <a href="{{ url_for('create_role') }}" class="btn btn-green">إنشاء دور جديد</a>
+</div>
+
+<div class="card">
+    {% if roles %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="padding: 12px; border-bottom: 2px solid #eee;">اسم الدور</th>
+                    <th style="padding: 12px; border-bottom: 2px solid #eee;">الوصف</th>
+                    <th style="padding: 12px; border-bottom: 2px solid #eee;">تاريخ الإنشاء</th>
+                    <th style="padding: 12px; border-bottom: 2px solid #eee;">العمليات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for role in roles %}
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold;">{{ role.RoleName }}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; color: #666;">{{ role.Description or 'N/A' }}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ role.CreateDate | truncate(10, true, '') }}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                        <div style="display: flex; gap: 10px;">
+                            <a href="{{ url_for('edit_role', role_name=role.RoleName) }}" class="btn btn-yellow" style="padding: 5px 10px; font-size: 14px;">تعديل</a>
+                            
+                            <form method="POST" action="{{ url_for('delete_role', role_name=role.RoleName) }}" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف الدور؟')">
+                                <button type="submit" class="btn btn-red" style="padding: 5px 10px; font-size: 14px;">حذف</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="text-align: center; padding: 20px; color: #777;">لا يوجد أدوار لعرضها.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

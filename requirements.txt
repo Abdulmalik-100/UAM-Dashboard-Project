@@ -1,0 +1,7 @@
+Flask
+flask-login
+aliyun-python-sdk-core
+aliyun-python-sdk-ram
+aliyun-python-sdk-sts
+aliyun-python-sdk-ims
+oss2

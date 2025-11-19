@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}تعديل المستخدم {{ username }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>✏️ تعديل صلاحيات المستخدم</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('edit_user', username=username) }}">
+            <div class="form-group">
+                <label>المستخدم:</label>
+                <div class="username-display">{{ username }}</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="policy_names">تغيير الصلاحيات إلى:</label>
+                <select id="policy_names" name="policy_names" class="form-control" multiple size="5">
+                    <option value="no_policy" {% if 'no_policy' in current_policies %}selected{% endif %}>
+                        -- إزالة كل الصلاحيات --
+                    </option>
+                    {% for name, display in all_policies.items() %}
+                        <option value="{{ name }}" {% if name in current_policies %}selected{% endif %}>
+                            {{ display }}
+                        </option>
+                    {% endfor %}
+                </select>
+                 <small class="form-text">اضغط (Ctrl) أو (Cmd) لاختيار أكثر من صلاحية.</small>
+            </div>
+            
+            <button type="submit" class="btn btn-yellow">تحديث الصلاحيات</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

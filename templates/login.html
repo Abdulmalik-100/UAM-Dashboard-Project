@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <title>تسجيل الدخول - UAM Dashboard</title>
+    <style>
+       /* ... (نفس ستايل الـ CSS المريح) ... */
+       :root { --bg-light-primary: #f4f7fa; --bg-light-secondary: #ffffff; --text-dark-primary: #212529; --text-dark-secondary: #6c757d; --border-color-light: #dee2e6; --accent-blue: #0d6efd; }
+       body { font-family: 'Cairo', sans-serif; margin: 0; background-color: var(--bg-light-primary); color: var(--text-dark-primary); display: flex; justify-content: center; align-items: center; height: 100vh; }
+       .login-card { width: 400px; background-color: var(--bg-light-secondary); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border: 1px solid var(--border-color-light); overflow: hidden; }
+       .login-header { text-align: center; padding: 30px; border-bottom: 1px solid var(--border-color-light); }
+       .login-header h2 { margin: 0; color: var(--text-dark-primary); font-weight: 700; }
+       .login-header h2 i { color: var(--accent-blue); }
+       .login-body { padding: 30px; }
+       .form-group { margin-bottom: 20px; }
+       .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark-secondary); }
+       .form-control { width: 100%; padding: 12px; font-size: 16px; border: 1px solid var(--border-color-light); border-radius: 8px; box-sizing: border-box; background-color: var(--bg-light-secondary); color: var(--text-dark-primary); font-family: 'Cairo', sans-serif; }
+       input[type="file"].form-control { padding: 9px 12px; }
+       .form-text { font-size: 0.9em; color: var(--text-dark-secondary); margin-top: 5px; display: block; }
+       .btn { width: 100%; text-decoration: none; color: #fff; padding: 12px 20px; border-radius: 8px; font-weight: 600; display: inline-block; border: none; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 16px; background-color: var(--accent-blue); }
+       .btn:hover { opacity: 0.9; }
+       .flashes { list-style: none; padding: 0; margin: 0 0 20px 0; }
+       .flashes li { padding: 15px 20px; border-radius: 8px; border: 1px solid; font-weight: 600; }
+       .flashes li.danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <h2><i class="fas fa-cloud"></i> UAM Dashboard</h2>
+        </div>
+        <div class="login-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+            <form method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="username">اسم المستخدم (RAM User Name):</label>
+                    <input type="text" id="username" name="username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="key_file">ملف المفاتيح (CSV):</label>
+                    <input type="file" id="key_file" name="key_file" class="form-control" accept=".csv" required>
+                    <small class="form-text">ارفع ملف .csv الذي حملته من "علي بابا".</small>
+                </div>
+                <button type="submit" class="btn">تسجيل الدخول</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

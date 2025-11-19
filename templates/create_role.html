@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}إنشاء دور جديد{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🛡️ إنشاء دور (Role) جديد</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('create_role') }}">
+            <div class="form-group">
+                <label for="role_name">اسم الدور (RoleName):</label>
+                <input type="text" id="role_name" name="role_name" class="form-control" required 
+                       pattern="[a-zA-Z0-9_-]{1,64}" 
+                       title="الرجاء إدخال حروف إنجليزية، أرقام، أو - و _ فقط (بدون مسافات)">
+            </div>
+            
+            <div class="form-group">
+                <label for="trust_policy_key">نوع الدور (لمن هذا الدور؟):</label>
+                <select id="trust_policy_key" name="trust_policy_key" class="form-control" required>
+                    <option value="">-- اختر نوع الدور --</option>
+                    {% for key, value in trust_policies.items() %}
+                        <option value="{{ key }}">{{ value.display }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">الوصف (Description):</label>
+                <input type="text" id="description" name="description" class="form-control">
+            </div>
+            
+            <button type="submit" class="btn btn-green">إنشاء الدور</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
