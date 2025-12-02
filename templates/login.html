@@ -1,56 +1,85 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <title>تسجيل الدخول - UAM Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - UAM System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-       /* ... (نفس ستايل الـ CSS المريح) ... */
-       :root { --bg-light-primary: #f4f7fa; --bg-light-secondary: #ffffff; --text-dark-primary: #212529; --text-dark-secondary: #6c757d; --border-color-light: #dee2e6; --accent-blue: #0d6efd; }
-       body { font-family: 'Cairo', sans-serif; margin: 0; background-color: var(--bg-light-primary); color: var(--text-dark-primary); display: flex; justify-content: center; align-items: center; height: 100vh; }
-       .login-card { width: 400px; background-color: var(--bg-light-secondary); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border: 1px solid var(--border-color-light); overflow: hidden; }
-       .login-header { text-align: center; padding: 30px; border-bottom: 1px solid var(--border-color-light); }
-       .login-header h2 { margin: 0; color: var(--text-dark-primary); font-weight: 700; }
-       .login-header h2 i { color: var(--accent-blue); }
-       .login-body { padding: 30px; }
-       .form-group { margin-bottom: 20px; }
-       .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-dark-secondary); }
-       .form-control { width: 100%; padding: 12px; font-size: 16px; border: 1px solid var(--border-color-light); border-radius: 8px; box-sizing: border-box; background-color: var(--bg-light-secondary); color: var(--text-dark-primary); font-family: 'Cairo', sans-serif; }
-       input[type="file"].form-control { padding: 9px 12px; }
-       .form-text { font-size: 0.9em; color: var(--text-dark-secondary); margin-top: 5px; display: block; }
-       .btn { width: 100%; text-decoration: none; color: #fff; padding: 12px 20px; border-radius: 8px; font-weight: 600; display: inline-block; border: none; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 16px; background-color: var(--accent-blue); }
-       .btn:hover { opacity: 0.9; }
-       .flashes { list-style: none; padding: 0; margin: 0 0 20px 0; }
-       .flashes li { padding: 15px 20px; border-radius: 8px; border: 1px solid; font-weight: 600; }
-       .flashes li.danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        body { font-family: 'Cairo', sans-serif; background-color: #f4f6f9; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        .nav-tabs .nav-link { color: #555; font-weight: 600; }
+        .nav-tabs .nav-link.active { color: #007bff; border-bottom: 3px solid #007bff; }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <div class="login-header">
-            <h2><i class="fas fa-cloud"></i> UAM Dashboard</h2>
-        </div>
-        <div class="login-body">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <ul class="flashes">
-                    {% for category, message in messages %}
-                        <li class="{{ category }}">{{ message }}</li>
-                    {% endfor %}
-                    </ul>
-                {% endif %}
-            {% endwith %}
+
+<div class="login-card">
+    <div class="text-center mb-4">
+        <h1 class="text-primary"><i class="fas fa-cloud"></i> UAM System</h1>
+        <p class="text-muted">نظام إدارة الوصول والصلاحيات</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <ul class="nav nav-tabs mb-3" id="loginTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-login" type="button" role="tab">ملف CSV (Admin)</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-login" type="button" role="tab">مفاتيح STS / يدوية</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="loginTabContent">
+        
+        <div class="tab-pane fade show active" id="file-login" role="tabpanel">
             <form method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="username">اسم المستخدم (RAM User Name):</label>
-                    <input type="text" id="username" name="username" class="form-control" required>
+                <div class="mb-3">
+                    <label class="form-label">اسم المستخدم (للتوضيح فقط)</label>
+                    <input type="text" name="username" class="form-control" placeholder="Admin" required>
                 </div>
-                <div class="form-group">
-                    <label for="key_file">ملف المفاتيح (CSV):</label>
-                    <input type="file" id="key_file" name="key_file" class="form-control" accept=".csv" required>
-                    <small class="form-text">ارفع ملف .csv الذي حملته من "علي بابا".</small>
+                <div class="mb-3">
+                    <label class="form-label">ملف المفاتيح (CSV)</label>
+                    <input type="file" name="key_file" class="form-control" accept=".csv" required>
                 </div>
-                <button type="submit" class="btn">تسجيل الدخول</button>
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-sign-in-alt"></i> دخول (Admin)</button>
             </form>
         </div>
+
+        <div class="tab-pane fade" id="manual-login" role="tabpanel">
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Access Key ID</label>
+                    <input type="text" name="ak_manual" class="form-control" placeholder="STS... or LTAI..." required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Access Key Secret</label>
+                    <input type="password" name="sk_manual" class="form-control" placeholder="Enter Secret Key" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Security Token (للمفاتيح المؤقتة فقط)</label>
+                    <textarea name="token_manual" class="form-control" rows="3" placeholder="إذا كان STS، الصق التوكين الطويل هنا"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success w-100"><i class="fas fa-key"></i> دخول بمفاتيح STS</button>
+            </form>
+        </div>
+
     </div>
+
+    <div class="text-center mt-3">
+        <small class="text-muted">مشروع تخرج 2025 &copy;</small>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
