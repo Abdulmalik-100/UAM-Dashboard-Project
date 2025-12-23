@@ -1,12 +1,14 @@
 from flask import Flask, render_template, flash, request, redirect, url_for, get_flashed_messages, session
 from aliyunsdkcore.client import AcsClient
+# ✅ تم إضافة ListAccessKeysRequest و DeleteAccessKeyRequest
 from aliyunsdkram.request.v20150501 import (
     ListUsersRequest, ListPoliciesForUserRequest, CreateUserRequest, DeleteUserRequest,
     AttachPolicyToUserRequest, DetachPolicyFromUserRequest,
     ListGroupsRequest, CreateGroupRequest, DeleteGroupRequest, AddUserToGroupRequest, ListGroupsForUserRequest,
     AttachPolicyToGroupRequest, ListPoliciesForGroupRequest, DetachPolicyFromGroupRequest,
     ListRolesRequest, CreateRoleRequest, GetRoleRequest, UpdateRoleRequest, DeleteRoleRequest,
-    CreateAccessKeyRequest
+    CreateAccessKeyRequest, ListUsersForGroupRequest, RemoveUserFromGroupRequest,
+    ListAccessKeysRequest, DeleteAccessKeyRequest
 )
 from aliyunsdksts.request.v20150401 import AssumeRoleRequest, GetCallerIdentityRequest
 import csv
@@ -66,7 +68,7 @@ class User(UserMixin):
 def load_user(user_id):
     access_key = session.get('access_key')
     secret_key = session.get('secret_key')
-    token = session.get('security_token') # ✅ استرجاع التوكين من الجلسة
+    token = session.get('security_token')
     if user_id and access_key and secret_key:
         return User(id=user_id, access_key=access_key, secret_key=secret_key, token=token)
     return None
@@ -74,7 +76,6 @@ def load_user(user_id):
 # --- دوال المساعدة ---
 
 def get_ram_client():
-    # ✅ تعديل مهم: إذا كان هناك توكين (STS) نستخدمه، وإلا نستخدم المفاتيح العادية
     if current_user.token:
         return AcsClient(current_user.access_key, current_user.secret_key, REGION_ID, security_token=current_user.token)
     return AcsClient(current_user.access_key, current_user.secret_key, REGION_ID)
@@ -117,8 +118,6 @@ def read_audit_log():
     except: pass
     return log_entries
 
-# ... (باقي دوال get_ram_users, get_groups, etc. لم تتغير ونبقيها كما هي) ...
-# سأضع لك الدوال المساعدة الأساسية هنا لضمان عمل الكود
 def get_user_policies_list(client, username):
     try:
         req = ListPoliciesForUserRequest.ListPoliciesForUserRequest(); req.set_accept_format('json'); req.set_UserName(username)
@@ -135,11 +134,28 @@ def get_ram_users():
         return users
     except Exception as e: flash(f"Error: {e}", "danger"); return []
 
+def get_group_users_list(client, group_name):
+    try:
+        req = ListUsersForGroupRequest.ListUsersForGroupRequest()
+        req.set_accept_format('json')
+        req.set_GroupName(group_name)
+        resp = client.do_action_with_exception(req)
+        return [u.get('UserName') for u in json.loads(resp).get('Users', {}).get('User', [])]
+    except:
+        return []
+
 def get_ram_groups():
     try:
-        client = get_ram_client(); req = ListGroupsRequest.ListGroupsRequest(); req.set_accept_format('json')
-        resp = client.do_action_with_exception(req); return json.loads(resp).get('Groups', {}).get('Group', [])
-    except: return []
+        client = get_ram_client()
+        req = ListGroupsRequest.ListGroupsRequest()
+        req.set_accept_format('json')
+        resp = client.do_action_with_exception(req)
+        groups = json.loads(resp).get('Groups', {}).get('Group', [])
+        for group in groups:
+            group['UsersList'] = get_group_users_list(client, group.get('GroupName'))
+        return groups
+    except:
+        return []
 
 def get_ram_roles():
     try:
@@ -159,52 +175,28 @@ def get_caller_identity():
 def login():
     if request.method == 'POST':
         try:
-            # الخيار 1: تسجيل الدخول بملف (المفاتيح الدائمة)
             if 'key_file' in request.files and request.files['key_file'].filename != '':
                 f = request.files.get('key_file')
                 stream = io.StringIO(f.stream.read().decode("utf-8-sig"), newline=None)
-                r = csv.reader(stream)
-                next(r, None) 
-                row = next(r)
+                r = csv.reader(stream); next(r, None); row = next(r)
                 user = User(id=request.form.get('username'), access_key=row[0], secret_key=row[1])
-                session['access_key'] = row[0]
-                session['secret_key'] = row[1]
-                session['security_token'] = None # تفريغ التوكين
-                login_user(user)
-                write_audit_log("Login successful (Permanent Keys)")
+                session['access_key'] = row[0]; session['secret_key'] = row[1]; session['security_token'] = None
+                login_user(user); write_audit_log("Login successful (Permanent Keys)")
                 return redirect(url_for('index'))
-            
-            # الخيار 2: تسجيل الدخول اليدوي (مفاتيح STS)
             elif request.form.get('ak_manual') and request.form.get('sk_manual'):
-                ak = request.form.get('ak_manual')
-                sk = request.form.get('sk_manual')
-                token = request.form.get('token_manual') # قد يكون فارغاً أو ممتلئاً
-                
-                # استخدام ID مؤقت للاسم
+                ak = request.form.get('ak_manual'); sk = request.form.get('sk_manual'); token = request.form.get('token_manual')
                 user_id = "STS_User" if token else "Manual_User"
-                
                 user = User(id=user_id, access_key=ak, secret_key=sk, token=token)
-                session['access_key'] = ak
-                session['secret_key'] = sk
-                session['security_token'] = token # حفظ التوكين في الجلسة
-                
-                login_user(user)
-                write_audit_log(f"Login successful ({'STS' if token else 'Manual'})")
+                session['access_key'] = ak; session['secret_key'] = sk; session['security_token'] = token
+                login_user(user); write_audit_log(f"Login successful ({'STS' if token else 'Manual'})")
                 return redirect(url_for('index'))
-                
-            else:
-                flash("الرجاء رفع ملف CSV أو إدخال المفاتيح يدوياً", "danger")
-
-        except Exception as e:
-            flash(str(e), "danger")
+            else: flash("الرجاء رفع ملف CSV أو إدخال المفاتيح يدوياً", "danger")
+        except Exception as e: flash(str(e), "danger")
     return render_template('login.html')
 
 @app.route('/logout')
 @login_required
-def logout():
-    logout_user()
-    session.clear()
-    return redirect(url_for('login'))
+def logout(): logout_user(); session.clear(); return redirect(url_for('login'))
 
 @app.route('/')
 @login_required
@@ -234,15 +226,11 @@ def generate_sts_token():
     if request.method == 'POST':
         try:
             client = get_ram_client()
-            req = AssumeRoleRequest.AssumeRoleRequest()
-            req.set_accept_format('json')
-            req.set_RoleArn(form.get('role_arn'))
-            req.set_RoleSessionName('session')
-            req.set_DurationSeconds(int(form.get('duration'))*60)
+            req = AssumeRoleRequest.AssumeRoleRequest(); req.set_accept_format('json')
+            req.set_RoleArn(form.get('role_arn')); req.set_RoleSessionName('session'); req.set_DurationSeconds(int(form.get('duration'))*60)
             creds = json.loads(client.do_action_with_exception(req)).get('Credentials')
             write_audit_log(f"STS generated for {form.get('role_arn')}")
-        except Exception as e:
-            flash(str(e), "danger")
+        except Exception as e: flash(str(e), "danger")
     return render_template('sts.html', roles=get_ram_roles(), credentials=creds, form_data=form)
 
 @app.route('/create_user', methods=['GET', 'POST'])
@@ -255,12 +243,10 @@ def create_user():
             req.set_UserName(request.form['username']); req.set_DisplayName(request.form['display_name'])
             req.set_Comments(f"{request.form.get('phone')} | {request.form.get('national_id')}")
             client.do_action_with_exception(req)
-            
             k_req = CreateAccessKeyRequest.CreateAccessKeyRequest(); k_req.set_accept_format('json')
             k_req.set_UserName(request.form['username'])
             k_resp = client.do_action_with_exception(k_req); k_data = json.loads(k_resp).get('AccessKey')
             new_ak = k_data.get('AccessKeyId'); new_sk = k_data.get('AccessKeySecret')
-
             for p in request.form.getlist('policy_names'):
                 if p != "no_policy":
                     att = AttachPolicyToUserRequest.AttachPolicyToUserRequest(); att.set_accept_format('json')
@@ -270,23 +256,57 @@ def create_user():
             if grp and grp != "no_group":
                 g = AddUserToGroupRequest.AddUserToGroupRequest(); g.set_UserName(request.form['username']); g.set_GroupName(grp)
                 client.do_action_with_exception(g)
-            
             write_audit_log(f"Created user {request.form['username']} with keys")
             flash(f"تم! انسخ المفاتيح الآن: ID: {new_ak} | Secret: {new_sk}", "success")
             return redirect(url_for('users'))
         except Exception as e: flash(str(e), "danger")
     return render_template('create_user.html', policies=AVAILABLE_POLICIES, groups=get_ram_groups())
 
+# ✅ تم تحديث دالة الحذف (تحذف الصلاحيات + المجموعات + المفاتيح)
 @app.route('/delete_user/<username>', methods=['POST'])
 @login_required
 def delete_user(username):
     try:
         client = get_ram_client()
+        
+        # 1. إزالة الصلاحيات
         for p in get_user_policies_list(client, username):
-            d = DetachPolicyFromUserRequest.DetachPolicyFromUserRequest(); d.set_PolicyType('System'); d.set_PolicyName(p); d.set_UserName(username); client.do_action_with_exception(d)
-        req = DeleteUserRequest.DeleteUserRequest(); req.set_UserName(username); client.do_action_with_exception(req)
-        write_audit_log(f"Deleted {username}"); flash("تم الحذف", "success")
-    except Exception as e: flash(str(e), "danger")
+            d = DetachPolicyFromUserRequest.DetachPolicyFromUserRequest()
+            d.set_PolicyType('System'); d.set_PolicyName(p); d.set_UserName(username)
+            client.do_action_with_exception(d)
+
+        # 2. إزالة من المجموعات
+        list_groups_req = ListGroupsForUserRequest.ListGroupsForUserRequest()
+        list_groups_req.set_UserName(username)
+        list_groups_resp = client.do_action_with_exception(list_groups_req)
+        user_groups = json.loads(list_groups_resp).get('Groups', {}).get('Group', [])
+
+        for group in user_groups:
+            rem_req = RemoveUserFromGroupRequest.RemoveUserFromGroupRequest()
+            rem_req.set_UserName(username); rem_req.set_GroupName(group.get('GroupName'))
+            client.do_action_with_exception(rem_req)
+        
+        # 3. ✅ (جديد) حذف جميع مفاتيح الوصول (Access Keys)
+        list_keys_req = ListAccessKeysRequest.ListAccessKeysRequest()
+        list_keys_req.set_UserName(username)
+        keys_resp = client.do_action_with_exception(list_keys_req)
+        keys = json.loads(keys_resp).get('AccessKeys', {}).get('AccessKey', [])
+        
+        for k in keys:
+            del_key_req = DeleteAccessKeyRequest.DeleteAccessKeyRequest()
+            del_key_req.set_UserName(username)
+            del_key_req.set_UserAccessKeyId(k.get('AccessKeyId'))
+            client.do_action_with_exception(del_key_req)
+
+        # 4. حذف المستخدم أخيراً
+        req = DeleteUserRequest.DeleteUserRequest()
+        req.set_UserName(username)
+        client.do_action_with_exception(req)
+        
+        write_audit_log(f"Deleted {username}")
+        flash("تم حذف المستخدم وكل متعلقاته بنجاح", "success")
+    except Exception as e:
+        flash(str(e), "danger")
     return redirect(url_for('users'))
 
 @app.route('/create_group', methods=['GET', 'POST'])

@@ -4,42 +4,85 @@
 
 {% block content %}
 
-<div class="page-title">
-    <span><i class="fas fa-layer-group"></i> قائمة المجموعات</span>
-    <a href="{{ url_for('create_group') }}" class="btn btn-yellow">إنشاء مجموعة جديدة</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 style="font-weight: bold; color: #333;">
+        <i class="fas fa-users-cog text-primary ms-2"></i> قائمة المجموعات
+    </h2>
+    <a href="{{ url_for('create_group') }}" class="btn btn-primary px-4 py-2" style="font-weight: bold;">
+        <i class="fas fa-plus ms-1"></i> إنشاء مجموعة جديدة
+    </a>
 </div>
 
-<div class="card">
-    {% if groups %}
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background-color: #f8f9fa;">
-                    <th style="padding: 12px; border-bottom: 2px solid #eee;">اسم المجموعة</th>
-                    <th style="padding: 12px; border-bottom: 2px solid #eee;">الوصف</th>
-                    <th style="padding: 12px; border-bottom: 2px solid #eee;">الصلاحيات</th>
-                    <th style="padding: 12px; border-bottom: 2px solid #eee;">تاريخ الإنشاء</th>
-                    <th style="padding: 12px; border-bottom: 2px solid #eee;">العمليات</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for group in groups %}
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold;">{{ group.GroupName }}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; color: #666;">{{ group.Comments or '-' }}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9em;">{{ group.Policies }}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ group.CreateDate | truncate(10, true, '') }}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">
-                        <form method="POST" action="{{ url_for('delete_group', group_name=group.GroupName) }}" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف المجموعة؟')">
-                            <button type="submit" class="btn btn-red" style="padding: 5px 10px; font-size: 14px;">حذف</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p style="text-align: center; padding: 20px; color: #777;">لا يوجد مجموعات لعرضها.</p>
-    {% endif %}
+<div class="card shadow-sm border-0" style="border-radius: 10px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="text-align: right;">
+                <thead style="background-color: #f8f9fa; color: #6c757d; font-size: 0.9rem;">
+                    <tr>
+                        <th class="py-3 px-4">اسم المجموعة</th>
+                        <th class="py-3 px-4">الأعضاء (Users)</th>
+                        <th class="py-3 px-4">الوصف / ملاحظات</th>
+                        <th class="py-3 px-4">تاريخ الإنشاء</th>
+                        <th class="py-3 px-4 text-center">العمليات</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 0.95rem;">
+                    {% for group in groups %}
+                    <tr style="border-bottom: 1px solid #eee;">
+                        
+                        <td class="px-4 py-3">
+                            <span style="font-weight: 600; color: #2d3436;">{{ group.GroupName }}</span>
+                        </td>
+
+                        <td class="px-4 py-3">
+                            {% if group.UsersList and group.UsersList|length > 0 %}
+                                <div style="line-height: 1.8;">
+                                    {% for user in group.UsersList %}
+                                        <span class="badge bg-light text-dark border" style="font-weight: normal; font-size: 0.85em;">
+                                            {{ user }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted small">-- فارغة --</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-4 py-3 text-muted">
+                            {{ group.Comments if group.Comments else '-' }}
+                        </td>
+
+                        <td class="px-4 py-3" style="direction: ltr; text-align: right;">
+                            {{ group.CreateDate | replace('T', ' ') | replace('Z', '') | truncate(10, true, '') }}
+                        </td>
+
+                        <td class="px-4 py-3 text-center">
+                            <button type="button" class="btn btn-sm mx-1" 
+                                    style="background-color: #ffc107; color: #000; border: none; font-weight: bold; padding: 5px 15px; border-radius: 4px;" 
+                                    disabled title="التعديل قادم قريباً">
+                                تعديل
+                            </button>
+
+                            <form action="{{ url_for('delete_group', group_name=group.GroupName) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف المجموعة؟');" style="display:inline;">
+                                <button type="submit" class="btn btn-sm mx-1" 
+                                        style="background-color: #dc3545; color: #fff; border: none; font-weight: bold; padding: 5px 15px; border-radius: 4px;">
+                                    حذف
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
+
+{% if not groups %}
+<div class="text-center py-5">
+    <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" alt="Empty" width="100" style="opacity: 0.5;">
+    <p class="text-muted mt-3">لا توجد مجموعات حالياً.</p>
+</div>
+{% endif %}
 
 {% endblock %}
